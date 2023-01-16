@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const counterSchema = new mongoose.Schema({
-    id:{
+    name:{
         type:String,
     },
     sequence:{
