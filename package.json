@@ -1,6 +1,10 @@
 {
   "name": "shorturl",
   "version": "0.0.3",
+  "engines":{
+    "node": "18.10.0",
+    "npm": "8.19.2"
+  },
   "description": "API project for freeCodeCamp",
   "main": "index.js",
   "scripts": {

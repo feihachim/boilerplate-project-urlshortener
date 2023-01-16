@@ -36,7 +36,7 @@ app.get('/api/hello', function(req, res) {
 
 app.post('/api/shorturl',function(req,res){
   const originalUrl = req.body.url;
-  const websiteTemplate = /^https?:\/\/[a-zA-Z0-9-_\.]+\.[a-z]{2,4}$/;
+  const websiteTemplate = /^(https?:\/\/)?[a-zA-Z0-9-_\.]+\.[a-z]{2,4}/;
 
   if(!websiteTemplate.test(originalUrl)){
     res.json({error:'invalid url'});
