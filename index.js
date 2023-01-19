@@ -1,12 +1,11 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
-const dns = require('node:dns');
+const validator=require('validator');
 const app = express();
-
-const Counter = require('./models/counter');
+const dns=require('dns');
+// const Counter = require('./models/counter');
 const ShortUrl = require('./models/shorturl');
 
 // Basic Configuration
@@ -19,9 +18,8 @@ db.on("error", console.error.bind(console, "MongoDB connection error:"));
 
 app.use(cors());
 
-app.use(bodyParser.urlencoded({ extended: false }));
-
-app.use(bodyParser.json());
+app.use(express.urlencoded({extended:true}));
+app.use(express.json());
 
 app.use('/public', express.static(`${process.cwd()}/public`));
 
@@ -36,68 +34,57 @@ app.get('/api/hello', function(req, res) {
 
 app.post('/api/shorturl',function(req,res){
   const originalUrl = req.body.url;
-  const websiteTemplate = /^(https?:\/\/)?[a-zA-Z0-9-_\.]+\.[a-z]{2,4}/;
-
-  if(!websiteTemplate.test(originalUrl)){
-    res.json({error:'invalid url'});
-    return;
-  }
-  const hostname = originalUrl.replace(/^https?:\/\//,'');
   
-  dns.lookup(hostname,(error,address,family)=>{
-    if(error){
-      res.json({error:'invalid url'});
-      return;
-    }
-    ShortUrl.find({},(err,urls)=>{
-      if(err) return handleError(err);
-      const urlCount=urls.length;
-      const newUrl=new ShortUrl({original_url:originalUrl,short_url:urlCount+1});
-      newUrl.save((err)=>{
-        if(err) return handleError(err);
-      });
-      res.json({original_url:newUrl.original_url,short_url:newUrl.short_url});
-    });
-    
-    /*const newShortUrl = new ShortUrl({ original_url: originalUrl, short_url: urlNumbers + 1 });
-    res.json(newShortUrl);
-    newShortUrl.save()
-                .then((savedUrl)=>{
-                  ShortUrl.find({original_url:originalUrl},"original_url short_url",(err,urlResult)=>{
-                    if(err){
-                      res.json({error:'invalid url'});
-                      return;
-                    }
-                    Counter.find({name:'Number of urls'}).then((counterResult)=>{
-                      counterResult.edit({sequence:counterResult.sequence+1}).save();
-                      urlResult.edit({short_url:counterResult.sequence}).save();
-                    }).catch((error)=>{
-                      const newCounter=new Counter({name:'Number of urls',sequence:1});
-                      newCounter.save().then((newCounterResult)=>{
-                        urlResult.edit({short_url:1}).save();
-                      }).catch((error)=>{
-                        res.json({error:'booya'});
-                        return;
-                      });
-                    })
-                    res.json(urlResult);
-                  });
+    const url=new URL(originalUrl);
+    if(url.origin!=="null"){
+      const hostname=url.hostname;
+    dns.lookup(hostname,(err,address)=>{
+      if(err){
+        console.log('erreur hote');
+        res.json({error:'invalid url'});
+        return;
+      }
+      ShortUrl.find()
+              .then((result)=>{
+                const urlCount=result.length;
+                const newUrl=new ShortUrl({original_url:originalUrl,short_url:urlCount+1});
+                newUrl.save(function(err,insertedUrl){
+                  if(err){
+                    res.json({error:'no new url'});
+                  }
+                  else{
+                    res.json(insertedUrl);
+                  }
                 })
-                .catch((error)=>{
-                  res.json({error:'invalid url'});
-                });*/
-  });
+                /*newUrl.save((err)=>{
+                  res.json({error:'pas nouveau'});
+                  return;
+                });
+                res.json(newUrl);*/
+              }).catch((error)=>{
+                console.log('erreur liste url');
+                res.json({error:'invalid url'});
+              })
+      
+    });
+    }else{
+      console.log('origine inconnue');
+      res.json({error:'invalid url'});
+    }
+  
+  
 });
 
 app.get('/api/shorturl/:shorturl',function(req,res){
   const shortUrl=Number(req.params.shorturl);
-  ShortUrl.find({short_url:shortUrl},"original_url short_url",(err,result)=>{
+  ShortUrl.find({short_url:shortUrl},function(err,urls){
     if(err){
-      res.json({error:'invalid url'});
-      return;
+      res.json(err);
     }
-    res.json(result);
-  })
+    else{
+      res.redirect(urls[0].original_url);
+    }
+  });
 });
 
 app.listen(port, function() {
