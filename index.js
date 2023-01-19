@@ -2,7 +2,6 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
-const validator=require('validator');
 const app = express();
 const dns=require('dns');
 // const Counter = require('./models/counter');
@@ -56,11 +55,6 @@ app.post('/api/shorturl',function(req,res){
                     res.json(insertedUrl);
                   }
                 })
-                /*newUrl.save((err)=>{
-                  res.json({error:'pas nouveau'});
-                  return;
-                });
-                res.json(newUrl);*/
               }).catch((error)=>{
                 console.log('erreur liste url');
                 res.json({error:'invalid url'});
